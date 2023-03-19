@@ -1,0 +1,13 @@
+{
+    "name": "Crypto",
+    "alias": "crypto",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Crypto\\Providers\\CryptoServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

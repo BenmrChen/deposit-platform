@@ -1,0 +1,23 @@
+{
+    "name": "metasens/crypto",
+    "description": "",
+    "authors": [
+        {
+            "name": "Nicolas",
+            "email": "n@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Crypto\\": ""
+        }
+    }
+}

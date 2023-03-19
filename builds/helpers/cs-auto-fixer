@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+
+export PARENT_DIR
+
+EXEC_PATH="${BASH_SOURCE[0]}"
+[ -L "${BASH_SOURCE[0]}" ] && EXEC_PATH="$(readlink "${BASH_SOURCE[0]}")"
+PARENT_DIR="$(dirname "${EXEC_PATH}")"
+PARENT_DIR="$(cd "${PARENT_DIR}" && cd ../../ && pwd)"
+
+# shellcheck disable=SC1090
+source "${PARENT_DIR}/builds/libs/init.sh"
+
+not_execute_in_docker
+
+export EXIT_CODE=0
+
+compose_set_env "run"
+
+echo "[php-cs-fixer] begin to run php-cs-fixer fix" && echo ""
+composer_run_vendor_cmd php-cs-fixer fix
+echo ""
+
+echo "[phpcs] begin to run phpcbf auto fix" && echo ""
+composer_run_vendor_cmd phpcbf || EXIT_CODE=$?
+
+if [[ $EXIT_CODE -eq 1 ]]; then
+    EXIT_CODE=0
+fi
+
+exit ${EXIT_CODE}

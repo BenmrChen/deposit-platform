@@ -1,0 +1,10 @@
+ARG APP_DOCKER_IMAGE
+FROM ${APP_DOCKER_IMAGE} AS build
+ARG COMPOSER_AUTH
+WORKDIR /getoken_code
+COPY . .
+RUN composer install --optimize-autoloader --no-interaction --no-progress --prefer-dist && \
+    find ./ -type d -exec chmod 755 {} +
+
+FROM ${APP_DOCKER_IMAGE}
+COPY --chown=www-data:www-data --from=build /getoken_code .

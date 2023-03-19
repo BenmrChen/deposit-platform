@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+
+export PARENT_DIR
+
+EXEC_PATH="${BASH_SOURCE[0]}"
+[ -L "${BASH_SOURCE[0]}" ] && EXEC_PATH="$(readlink "${BASH_SOURCE[0]}")"
+PARENT_DIR="$(dirname "${EXEC_PATH}")"
+PARENT_DIR="$(cd "${PARENT_DIR}" && cd ../../ && pwd)"
+
+# shellcheck disable=SC1090
+source "${PARENT_DIR}/builds/libs/init.sh"
+
+not_execute_in_docker
+
+OS="$(uname -s)"
+
+if [[ "${OS}" != "Darwin" ]]; then
+  echo "This script is OSX-only. Please do not run it on any other Unix."
+  exit 1
+fi
+
+if [[ "${EUID}" -eq 0 ]]; then
+  echo "This script must NOT be run with sudo/root. Please re-run without sudo." 1>&2
+  exit 1
+fi
+
+NFS_EXPORT_DIR="/Users"
+
+# Catalina nfs new design ... need workaround.
+# https://github.com/drud/ddev/issues/1869
+if [[ -d "/System/Volumes/Data" ]]; then
+    NFS_EXPORT_DIR="/System/Volumes/Data/Users"
+fi
+
+echo
+echo " +-----------------------------+"
+echo " | Setup native NFS for Docker |"
+echo " +-----------------------------+"
+echo
+echo -n "Do you wish to proceed? [y]: "
+read -r decision
+
+if [ "${decision}" != "y" ]; then
+  echo "Exiting. No changes made."
+  exit 1
+fi
+
+echo
+
+echo "== Resetting folder permissions..."
+USER_UID="$(id -u)"
+USER_GID="$(id -g)"
+sudo chown -R "${USER_UID}":"${USER_GID}" "${PARENT_DIR}"
+
+echo "== Setting up nfs server..."
+LINE="${NFS_EXPORT_DIR} -alldirs -mapall=${USER_UID}:${USER_GID} localhost"
+FILE=/etc/exports
+sudo cp /dev/null "${FILE}"
+grep -qF -- "${LINE}" "${FILE}" || sudo echo "${LINE}" | sudo tee -a "${FILE}" > /dev/null
+
+LINE="nfs.server.mount.require_resv_port = 0"
+FILE=/etc/nfs.conf
+grep -qF -- "${LINE}" "${FILE}" || sudo echo "${LINE}" | sudo tee -a "${FILE}" > /dev/null
+
+echo "== Restarting nfsd..."
+sudo nfsd restart
+
+echo
+echo "SUCCESS! Now go run your containers 🐳"

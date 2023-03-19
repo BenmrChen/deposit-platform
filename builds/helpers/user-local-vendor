@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+
+export PARENT_DIR
+
+EXEC_PATH="${BASH_SOURCE[0]}"
+[ -L "${BASH_SOURCE[0]}" ] && EXEC_PATH="$(readlink "${BASH_SOURCE[0]}")"
+PARENT_DIR="$(dirname "${EXEC_PATH}")"
+PARENT_DIR="$(cd "${PARENT_DIR}" && cd ../../ && pwd)"
+
+function jq_replace_file {
+    local cmd_exec
+    local jq_query_str="${1}"
+    local replace_file="${2}"
+    local replace_tmp_file="${replace_file}.bak"
+
+    cmd_exec=("compose_exec_cmd" "app" "jq" "${jq_query_str}" "${replace_file}")
+    "${cmd_exec[@]}" > "${replace_tmp_file}"
+    mv "${replace_tmp_file}" "${replace_file}"
+}
+
+function jq_get_value {
+    local cmd_exec
+    local jq_query_str="${1}"
+    local source_file="${2}"
+
+    cmd_exec=("compose_exec_cmd" "app" "jq" "-r" "${jq_query_str}" "${source_file}")
+    "${cmd_exec[@]}"
+}
+
+function get_inputs {
+    local stop_input="stop"
+    local user_input=""
+
+    while true; do
+        read -r -p "Enter composer package name (enter stop if no more): " user_input
+
+        if [[ "${user_input}" == "${stop_input}" ]]; then
+            break
+        fi
+
+        COMPOSER_PACKAGE_NAME+=("${user_input}")
+        read -r -p "Enter your local composer package path: " user_input
+
+        if [[ ! -d "${user_input}" ]]; then
+            echo "local path is not exist, exit. ${user_input}"
+            exit 1
+        fi
+
+        COMPOSER_LOCAL_PACKAGE_PATH+=("${user_input}")
+    done
+}
+
+# shellcheck disable=SC1090
+source "${PARENT_DIR}/builds/libs/init.sh"
+
+not_execute_in_docker
+
+export COMPOSER_PACKAGE_NAME=()
+export COMPOSER_LOCAL_PACKAGE_PATH=()
+
+export COMPOSER_FILE="${PARENT_DIR}/composer.json"
+export COMPOSER_LOCK_FILE="${PARENT_DIR}/composer.lock"
+export COMPOSER_LOCAL_DIR="${PARENT_DIR}/builds/artifacts/composer"
+export COMPOSER_LOCAL_FILE="${COMPOSER_LOCAL_DIR}/config.json"
+export COMPOSER_LOCAL_LOCK_FILE="${COMPOSER_LOCAL_DIR}/config.lock"
+
+compose_set_env "run"
+
+if [[ -n "${JUST_REINSTALL}" ]]; then
+    compose_exec_cmd -e "COMPOSER=${COMPOSER_LOCAL_FILE}" app composer install
+    exit 0
+fi
+
+get_inputs
+
+if [[ ${#COMPOSER_PACKAGE_NAME[@]} -le 0 ]]; then
+    echo "no user input, exit."
+    exit 0
+fi
+
+compose_exec_cmd app mkdir -p "${COMPOSER_LOCAL_DIR}"
+compose_exec_cmd app /bin/cp -f "${COMPOSER_FILE}" "${COMPOSER_LOCAL_FILE}"
+compose_exec_cmd app /bin/cp -f "${COMPOSER_LOCK_FILE}" "${COMPOSER_LOCAL_LOCK_FILE}"
+
+for index in "${!COMPOSER_PACKAGE_NAME[@]}"; do
+    package_name="${COMPOSER_PACKAGE_NAME[$index]}"
+    local_package_path="${COMPOSER_LOCAL_PACKAGE_PATH[$index]}"
+
+    jq_query_str=".packages[] | select(.name == \"${package_name}\").source.url"
+    package_git_url="$(jq_get_value "${jq_query_str}" "${COMPOSER_LOCAL_LOCK_FILE}")"
+
+    if [[ -n "${package_git_url}" ]]; then
+        jq_query_str="del (.repositories[] | select(.url == \"${package_git_url}\"))"
+        jq_replace_file "${jq_query_str}" "${COMPOSER_LOCAL_FILE}"
+    fi
+
+    if [[ -d "${PARENT_DIR}/vendor/${package_name}" ]]; then
+        rm -rf "${PARENT_DIR}/vendor/${package_name}"
+    fi
+
+    add_json_str="{\"type\": \"path\", \"url\": \"${local_package_path}\", \"options\": {\"symlink\": true}}"
+    jq_query_str=".repositories[.repositories | length] |= . + ${add_json_str}"
+    jq_replace_file "${jq_query_str}" "${COMPOSER_LOCAL_FILE}"
+
+    jq_query_str=".require.\"${package_name}\" or .\"require-dev\".\"${package_name}\""
+    exist_in_require="$(jq_get_value "${jq_query_str}" "${COMPOSER_LOCAL_FILE}")"
+
+    if [[ "${exist_in_require}" == "true" ]]; then
+        jq_query_str=". | if .require.\"${package_name}\" != null then .require.\"${package_name}\" = \"dev-master\" else . end"
+        jq_query_str+=" | if .\"require-dev\".\"${package_name}\" != null then .\"require-dev\".\"${package_name}\" = \"dev-master\" else . end"
+    else
+        jq_query_str=".\"require-dev\".\"${package_name}\" = \"dev-master\""
+    fi
+    jq_replace_file "${jq_query_str}" "${COMPOSER_LOCAL_FILE}"
+done
+
+compose_exec_cmd -e "COMPOSER=${COMPOSER_LOCAL_FILE}" \
+app composer update --lock "${COMPOSER_PACKAGE_NAME[@]}"
+
+exit 0

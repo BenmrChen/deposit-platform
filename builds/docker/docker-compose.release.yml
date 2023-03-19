@@ -1,0 +1,18 @@
+version: "3"
+services:
+  app-deploy:
+    image: ${DEPLOY_APP_DOCKER_IMAGE}:${RELEASE_IMAGE_VERSION}
+    build:
+      context: ./
+      dockerfile: ./builds/docker/Dockerfile.app-deploy
+      args:
+        APP_DOCKER_IMAGE: ${APP_DOCKER_IMAGE}
+        COMPOSER_AUTH: ${COMPOSER_AUTH}
+  app-deploy-full:
+    image: ${DEPLOY_APP_DOCKER_IMAGE}-debugger:${RELEASE_IMAGE_VERSION}
+    build:
+      context: ./
+      dockerfile: ./builds/docker/Dockerfile.app-deploy-full
+      args:
+        APP_DOCKER_IMAGE: ${APP_DOCKER_IMAGE}
+        COMPOSER_AUTH: ${COMPOSER_AUTH}

@@ -1,0 +1,15 @@
+/node_modules
+/public/hot
+/public/storage
+/vendor
+/.idea
+/.vscode
+
+.env
+.DS_Store
+.phpunit.result.cache
+.php_cs.cache
+.phplint-cache
+npm-debug.log
+yarn-error.log
+docker-compose.override.yml

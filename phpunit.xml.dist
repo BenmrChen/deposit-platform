@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    backupGlobals="false"
+    backupStaticAttributes="false"
+    bootstrap="./vendor/autoload.php"
+    colors="true"
+    convertErrorsToExceptions="true"
+    convertNoticesToExceptions="true"
+    convertWarningsToExceptions="true"
+    cacheResult="true"
+    processIsolation="false"
+    stopOnFailure="false"
+    xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd">
+    <coverage processUncoveredFiles="true">
+        <include>
+            <directory suffix=".php">./app</directory>
+        </include>
+        <report>
+            <html outputDirectory="./builds/artifacts/phpunit"/>
+        </report>
+    </coverage>
+    <testsuites>
+        <testsuite name="Modules">
+            <directory suffix="Test.php">./Modules/*/Tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+    <logging/>
+    <php>
+        <env name="APP_ENV" value="testing"/>
+        <env name="APP_DEBUG" value="true"/>
+        <env name="BCRYPT_ROUNDS" value="4"/>
+        <env name="CACHE_DRIVER" value="redis"/>
+        <env name="MAIL_MAILER" value="array"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+        <env name="SESSION_DRIVER" value="array"/>
+        <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="DB_DATABASE" value="unit-test"/>
+        <env name="API_LOGGER_ENABLED" value="false"/>
+        <env name="API_LOGGER_LOG_RESPONSE" value="false"/>
+        <env name="LIMIT_LOGIN_MAX_ATTEMPTS" value="2"/>
+        <env name="LIMIT_LOGIN_PER_MINUTES" value="1"/>
+        <env name="CLIENT_BYPASS_LOCAL_IP" value="true"/>
+        <env name="CLIENT_BYPASS_SIGNATURE_CHECK" value="true"/>
+        <env name="WITHDRAWAL_CLIENT_IDS" value="9501abd7-9b59-4925-8a2a-bcb29cf3cd15"/>
+        <env name="WITHDRAWAL_DEFAULT_MIN_UCG" value="3000"/>
+        <env name="WITHDRAWAL_DEFAULT_MAX_UCG" value="50000000"/>
+        <env name="WITHDRAWAL_DEFAULT_FEE_UCG" value="307"/>
+        <env name="WITHDRAWAL_DEFAULT_MIN_MSU" value="2"/>
+        <env name="WITHDRAWAL_DEFAULT_MAX_MSU" value="200000"/>
+        <env name="WITHDRAWAL_DEFAULT_FEE_MSU" value="0.2"/>
+        <env name="WITHDRAWAL_DEFAULT_MIN_BNB" value="0.01"/>
+        <env name="WITHDRAWAL_DEFAULT_MAX_BNB" value="100"/>
+        <env name="WITHDRAWAL_DEFAULT_FEE_BNB" value="0.001"/>
+        <env name="WITHDRAWAL_DEFAULT_MIN_PARA" value="2"/>
+        <env name="WITHDRAWAL_DEFAULT_MAX_PARA" value="200000"/>
+        <env name="WITHDRAWAL_DEFAULT_FEE_PARA" value="0.2"/>
+        <env name="WITHDRAWAL_DEFAULT_MIN_MATIC" value="0.01"/>
+        <env name="WITHDRAWAL_DEFAULT_MAX_MATIC" value="100"/>
+        <env name="WITHDRAWAL_DEFAULT_FEE_MATIC" value="0.001"/>
+        <env name="SWAP_HANDLING_FEE_DEFAULT" value="0.003"/>
+        <env name="SWAP_SLIPPAGE_TOLERANCE_DEFAULT" value="0.005"/>
+        <env name="SWAP_MIN_PT" value="10"/>
+        <env name="SWAP_MAX_PT" value="100"/>
+        <env name="POOL_OWNER_CLIENT_ID" value="9501abd7-9b59-4925-8a2a-bcb29cf3cd15"/>
+        <env name="WITHDRAWAL_CLIENT_MARKET_PLACE" value="9501abd7-9b59-4925-8a2a-bcb29cf3cd15"/>
+    </php>
+</phpunit>

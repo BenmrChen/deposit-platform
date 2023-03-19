@@ -1,0 +1,56 @@
+version: "2.3"
+services:
+  app:
+    build:
+      context: ./
+      dockerfile: ./builds/docker/Dockerfile
+      args:
+        APP_DOCKER_IMAGE: ${APP_DOCKER_IMAGE}
+    image: 7senses-game/metasens-user-app
+    restart: on-failure
+    volumes:
+      - source-code-data:${WORKSPACE_DIR}
+    working_dir: ${WORKSPACE_DIR}
+    environment:
+      - NODE_PATH=/usr/local/lib/node_modules
+      - DEBUG_MODE=true
+    command:
+      - php
+      - artisan
+      - octane:start
+      - --server=swoole
+      - --host=0.0.0.0
+      - --port=80
+      - --watch
+    ports:
+      - 80:80
+  mysql:
+    ports:
+      - 3306:3306
+  redis:
+    ports:
+      - 6379:6379
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    ports:
+      - 8025:8025
+    networks:
+      - getoken
+volumes:
+  source-code-data:
+x-mutagen:
+  sync:
+    defaults:
+      ignore:
+        vcs: true
+    source-code-data:
+      alpha: "."
+      beta: "volume://source-code-data"
+      mode: "two-way-resolved"
+      permissions:
+        defaultFileMode: 0644
+        defaultDirectoryMode: 0755
+      configurationBeta:
+        permissions:
+          defaultOwner: "id:0"
+          defaultGroup: "id:0"

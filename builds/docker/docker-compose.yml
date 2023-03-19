@@ -1,0 +1,73 @@
+version: "2.3"
+services:
+  cspell:
+    image: ${CSPELL_DOCKER_IMAGE}
+    working_dir: ${WORKSPACE_DIR}
+    command: ["sleep", "6000"]
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    volumes:
+      - ./storage/api-docs:/usr/share/nginx/html/api-docs:ro
+    environment:
+      URLS: |
+        [
+            { name: "passport-v1", url: "/api-docs/passport-v1.yaml" },
+            { name: "point-api-v1", url: "/api-docs/point-api-v1.yaml" },
+            { name: "point-exchange-v1", url: "/api-docs/point-exchange-v1.yaml" },
+            { name: "point-vault-v1", url: "/api-docs/point-vault-v1.yaml" },
+            { name: "shop-api-v1", url: "/api-docs/shop-api-v1.yaml" }
+        ]
+      URLS_PRIMARY_NAME: point-exchange-v1
+      DOC_EXPANSION: none
+    ports:
+      - 8080:8080
+    networks:
+      - getoken
+  app:
+    image: ${APP_DOCKER_IMAGE}
+    environment:
+      - PHP_ERR_LOG_PATH=/dev/stdout
+      - PHP_DISPLAY_ERROR_ENABLED=true
+      - PHP_FILE_UPLOAD_ENABLED=true
+      - PHP_FILE_UPLOAD_MAX_SIZE=10
+      - COMPOSER_AUTH=${COMPOSER_AUTH}
+    networks:
+      - getoken
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+  mysql:
+    image: mysql:5.7
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./builds/docker/mysql-custom.sql:/docker-entrypoint-initdb.d/custom.sql:ro
+    networks:
+      - getoken
+    environment:
+      - TERM=xterm
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=metasens-passport
+      - MYSQL_USER=api-server-user
+      - MYSQL_PASSWORD=CWQDFSq8zTleEvyV6l44qjSR8ss8zGyU
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'mysql --connect-timeout=1 -u root -proot -e "select 1;" > /dev/null 2>&1 || exit 1',
+        ]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+  redis:
+    image: redis:6-alpine
+    volumes:
+      - redis_data:/data
+    networks:
+      - getoken
+networks:
+  getoken:
+volumes:
+  mysql_data:
+  redis_data:

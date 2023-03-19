@@ -1,0 +1,87 @@
+@startmindmap
+
+title MindMap for Metasens Points
+
+skinparam handwritten false
+skinparam backgroundColor Ivory
+
+<style>
+mindmapDiagram {
+    node {
+      BackgroundColor White
+    }
+    rootNode {
+      classFontColor White
+      LineColor DodgerBlue
+      BackGroundColor lightblue
+    }
+    :depth(2) {
+      BackGroundColor HoneyDew
+    }
+    :depth(3) {
+      BackGroundColor LightYellow
+    }
+}
+</style>
+
+* 　Metasens Points　
+
+** Common
+*** 多幣種
+**** _digits
+*** 風控
+
+** Admin
+*** User Management
+**** 開關
+**** 開分
+**** 訂單管理
+*** Client Management
+
+
+** Vault
+
+** MarketPlace Integration
+
+left side
+
+** End User
+*** deposit
+****_ 點數發放
+****_ 錢包轉帳 (?)
+*** withdraw
+*** Balance & Balance Log
+*** Client Permission (?)
+
+** Game Provider / Client
+*** deposit
+****_ Admin開分
+****_ <s>錢包轉帳</s> (暫不實作)
+****_ 交易開關
+*** withdraw
+****_ 交易開關
+*** Balance & Balance Log
+*** Integration
+**** API
+*****_ 發放client點數
+*****_ 消費client點數
+*****_ 查詢點數餘額
+*****_ 查詢點數歷程
+*****_ 查詢訂單狀態
+**** Callback
+*****_ 訂單狀態通知
+
+
+
+** SSO Integration
+***_ client 認證 (?)
+
+** 待確認
+***_ 中國端連線？
+***_ SSO & Points切分
+
+legend right
+Last update: 2022/03/01
+endlegend
+
+@endmindmap

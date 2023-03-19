@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+
+export PARENT_DIR
+
+EXEC_PATH="${BASH_SOURCE[0]}"
+[ -L "${BASH_SOURCE[0]}" ] && EXEC_PATH="$(readlink "${BASH_SOURCE[0]}")"
+PARENT_DIR="$(dirname "${EXEC_PATH}")"
+PARENT_DIR="$(cd "${PARENT_DIR}" && cd ../../ && pwd)"
+
+# shellcheck disable=SC1090
+source "${PARENT_DIR}/builds/libs/init.sh"
+
+not_execute_in_docker
+
+compose_set_env "run"
+compose_exec_cmd app composer install
+
+exit 0

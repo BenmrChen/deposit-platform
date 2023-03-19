@@ -1,0 +1,8 @@
+path: ./
+extensions:
+  - php
+exclude:
+  - builds
+  - resources
+  - storage
+  - vendor

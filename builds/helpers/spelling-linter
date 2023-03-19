@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+
+export PARENT_DIR
+
+EXEC_PATH="${BASH_SOURCE[0]}"
+[ -L "${BASH_SOURCE[0]}" ] && EXEC_PATH="$(readlink "${BASH_SOURCE[0]}")"
+PARENT_DIR="$(dirname "${EXEC_PATH}")"
+PARENT_DIR="$(cd "${PARENT_DIR}" && cd ../../ && pwd)"
+
+# shellcheck disable=SC1090,SC1091
+source "${PARENT_DIR}/builds/libs/init.sh"
+
+not_execute_in_docker
+
+compose_set_env "run"
+
+export EXIT_CODE=0
+export COMPOSE_USER="www-data"
+
+compose_cmd up -d cspell
+ci_cspell_prepare
+
+echo ""
+ci_cspell_check || EXIT_CODE=$((EXIT_CODE + 1))
+
+echo ""
+compose_cmd rm -f -s -v cspell
+
+echo ""
+echo "execute status: ${EXIT_CODE}"
+
+# shellcheck disable=SC2086
+exit ${EXIT_CODE}
